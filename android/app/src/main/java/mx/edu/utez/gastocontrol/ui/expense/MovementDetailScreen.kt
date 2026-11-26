@@ -1,5 +1,7 @@
 package mx.edu.utez.gastocontrol.ui.expense
 
+import mx.edu.utez.gastocontrol.data.model.MovementDto
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import mx.edu.utez.gastocontrol.data.model.MovementDto
 
 @Composable
 fun MovementDetailScreen(

@@ -1,5 +1,7 @@
 package mx.edu.utez.gastocontrol.ui.expense
 
+import mx.edu.utez.gastocontrol.data.model.MovementDto
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import mx.edu.utez.gastocontrol.data.model.MovementDto
 
 // Fila reutilizable: Brian la usa en Dashboard e Historial
 @Composable
