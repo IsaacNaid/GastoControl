@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import mx.edu.utez.gastocontrol.data.model.MovementDto
 import mx.edu.utez.gastocontrol.data.model.MovementRequest
 import mx.edu.utez.gastocontrol.data.repository.ApiException
 import mx.edu.utez.gastocontrol.data.repository.MovementRepository

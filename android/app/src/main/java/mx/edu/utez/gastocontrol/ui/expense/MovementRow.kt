@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import mx.edu.utez.gastocontrol.data.model.MovementDto
 
 // Fila reutilizable: Brian la usa en Dashboard e Historial
 @Composable

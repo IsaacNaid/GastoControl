@@ -36,14 +36,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import mx.edu.utez.gastocontrol.data.model.CategoryDto
-import mx.edu.utez.gastocontrol.data.model.MovementDto
 import mx.edu.utez.gastocontrol.data.model.MovementRequest
+import mx.edu.utez.gastocontrol.data.remote.CategoryDto
 import java.math.RoundingMode
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import kotlin.collections.filter
 
 /**
  * movementId == null: nuevo. Con valor: editar.
@@ -126,7 +126,8 @@ private fun MovementForm(
     val cleanAmount = amount.trim()
     val validAmount = cleanAmount.matches(Regex("""\d{1,10}(\.\d{1,2})?""")) &&
             cleanAmount.toBigDecimal().signum() > 0
-    val selected = categories.find { it.id == categoryId }
+    val filteredCategories = categories.filter { it.type == type }
+    val selected = filteredCategories.find { it.id == categoryId }
 
     Column(
         modifier = Modifier
@@ -144,7 +145,13 @@ private fun MovementForm(
             listOf("EXPENSE", "INCOME").forEach { option ->
                 FilterChip(
                     selected = type == option,
-                    onClick = { type = option },
+                    onClick = {
+                        if (type != option) {
+                            type = option
+                            categoryId = null
+                            menuOpen = false
+                        }
+                    },
                     label = { Text(movementTypeLabel(option)) }
                 )
             }
@@ -187,21 +194,12 @@ private fun MovementForm(
                 ) { Text(selected?.name ?: "Selecciona una categoría") }
 
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    categories.forEach { category ->
-                        DropdownMenuItem(
-                            text = { Text(category.name) },
-                            onClick = {
-                                categoryId = category.id
-                                menuOpen = false
-                            }
-                        )
+                    if (categories.isEmpty()) {
+                        FieldError("No hay categorías disponibles. Crea una primero.")
+                    } else if (submitted && selected == null) {
+                        FieldError("La categoría es obligatoria")
                     }
                 }
-            }
-            if (categories.isEmpty()) {
-                FieldError("No hay categorías disponibles. Crea una primero.")
-            } else if (submitted && selected == null) {
-                FieldError("La categoría es obligatoria")
             }
         }
 

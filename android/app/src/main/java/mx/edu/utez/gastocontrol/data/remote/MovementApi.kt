@@ -1,6 +1,5 @@
 package mx.edu.utez.gastocontrol.data.remote
 
-import mx.edu.utez.gastocontrol.data.model.MovementDto
 import mx.edu.utez.gastocontrol.data.model.MovementRequest
 import retrofit2.Response
 import retrofit2.http.Body
