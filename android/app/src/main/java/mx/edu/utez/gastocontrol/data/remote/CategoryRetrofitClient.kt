@@ -1,5 +1,6 @@
 package mx.edu.utez.gastocontrol.data.remote
 
+import mx.edu.utez.gastocontrol.util.SessionManager
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -14,6 +15,22 @@ object CategoryRetrofitClient {
     }
 
     private val client = OkHttpClient.Builder()
+        .addInterceptor { chain ->
+            val request = chain.request()
+            val authorization = SessionManager.getAuthorization()
+
+            val authenticatedRequest =
+                if (authorization != null &&
+                    request.header("Authorization") == null) {
+                    request.newBuilder()
+                        .header("Authorization", authorization)
+                        .build()
+                } else {
+                    request
+                }
+
+            chain.proceed(authenticatedRequest)
+        }
         .addInterceptor(logging)
         .build()
 
