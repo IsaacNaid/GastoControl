@@ -9,20 +9,24 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import mx.edu.utez.gastocontrol.data.remote.AuthRetrofitClient
 import mx.edu.utez.gastocontrol.data.repository.AuthRepository
+import mx.edu.utez.gastocontrol.ui.AppNavigation
 import mx.edu.utez.gastocontrol.ui.auth.AuthNavigation
 import mx.edu.utez.gastocontrol.ui.auth.AuthViewModel
 import mx.edu.utez.gastocontrol.ui.auth.AuthViewModelFactory
 import mx.edu.utez.gastocontrol.ui.theme.GastoControlTheme
 import mx.edu.utez.gastocontrol.util.BiometricHelper
+import mx.edu.utez.gastocontrol.util.SessionManager
 
 class MainActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
@@ -62,6 +66,7 @@ class MainActivity : FragmentActivity() {
 
                             AuthNavigation(
                                 viewModel = authViewModel,
+
                                 onLoginSuccess = {
 
                                     if (
@@ -77,6 +82,7 @@ class MainActivity : FragmentActivity() {
 
                                             onError = { message ->
 
+                                                SessionManager.clearSession()
                                                 authViewModel.resetForm()
 
                                                 Toast.makeText(
@@ -88,7 +94,6 @@ class MainActivity : FragmentActivity() {
                                         )
 
                                     } else {
-
                                         isAuthenticated = true
                                     }
                                 }
@@ -96,34 +101,32 @@ class MainActivity : FragmentActivity() {
 
                         } else {
 
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(24.dp),
-                                horizontalAlignment =
-                                    Alignment.CenterHorizontally,
-                                verticalArrangement =
-                                    Arrangement.Center
+                            val sessionOwner = remember {
+                                object : ViewModelStoreOwner {
+                                    override val viewModelStore =
+                                        ViewModelStore()
+                                }
+                            }
+
+                            DisposableEffect(sessionOwner) {
+                                onDispose {
+                                    sessionOwner.viewModelStore.clear()
+                                }
+                            }
+
+                            CompositionLocalProvider(
+                                LocalViewModelStoreOwner provides sessionOwner
                             ) {
+                                AppNavigation(
+                                    onLogout = {
 
-                                Text(
-                                    text = "Bienvenido a GastoControl",
-                                    style = MaterialTheme
-                                        .typography.headlineSmall
-                                )
+                                        SessionManager.clearSession()
 
-                                Spacer(
-                                    modifier = Modifier.height(16.dp)
-                                )
-
-                                Button(
-                                    onClick = {
                                         authViewModel.resetForm()
+
                                         isAuthenticated = false
                                     }
-                                ) {
-                                    Text("Cerrar sesión")
-                                }
+                                )
                             }
                         }
                     }
