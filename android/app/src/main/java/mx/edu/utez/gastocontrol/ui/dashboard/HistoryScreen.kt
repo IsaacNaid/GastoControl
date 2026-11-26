@@ -137,7 +137,9 @@ fun HistoryScreen(
                 is HistoryUiState.Success -> {
                     EtiquetaPeriodo(estado.filtros)
                     ResumenPeriodo(estado.totales)
-                    LazyColumn(modifier = Modifier.weight(1f)) {
+                    LazyColumn(modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         items(estado.movimientos, key = { it.id }) { movimiento ->
                             MovementRow(
                                 movement = movimiento,
