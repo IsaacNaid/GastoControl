@@ -1,0 +1,19 @@
+
+# Oracle Cloud Wallet
+backend/gastocontrol-backend/wallet/
+**/Wallet_*.zip
+.env
+**/.env
+
+.DS_Store
+**/.DS_Store
+**/wallet/
+**/Wallet_*.zip
+**/.env
+**/.env.*
+**/target/
+**/build/
+**/.gradle/
+**/local.properties
+
+**/*.respaldo

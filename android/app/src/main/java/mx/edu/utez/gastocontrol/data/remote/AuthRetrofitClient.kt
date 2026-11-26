@@ -52,7 +52,7 @@ object AuthRetrofitClient {
         retrofit.create(MovementApi::class.java)
     }
 
-    val categoryApi: CategoryApi by lazy {
-        retrofit.create(CategoryApi::class.java)
+    val categoryApi: CategoryApiService by lazy {
+        retrofit.create(CategoryApiService::class.java)
     }
 }
