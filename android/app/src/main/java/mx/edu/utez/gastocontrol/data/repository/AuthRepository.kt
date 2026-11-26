@@ -1,4 +1,4 @@
-package mx.edu.utez.gastocontrol.data.repository
+﻿package mx.edu.utez.gastocontrol.data.repository
 
 import mx.edu.utez.gastocontrol.data.model.RegisterRequest
 import mx.edu.utez.gastocontrol.data.remote.AuthApi
@@ -44,5 +44,9 @@ class AuthRepository(
         }
 
         return response
+    }
+
+    fun logout() {
+        SessionManager.clearSession()
     }
 }
