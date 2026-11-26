@@ -114,7 +114,7 @@ class HistoryViewModel(
                     type = filtrosLimpios.tipo,
                     from = filtrosLimpios.desde.ifEmpty { null },
                     to = filtrosLimpios.hasta.ifEmpty { null }
-                )
+                ).getOrThrow()
                 if (movimientos.isEmpty()) {
                     HistoryUiState.Empty(filtrosLimpios)
                 } else {

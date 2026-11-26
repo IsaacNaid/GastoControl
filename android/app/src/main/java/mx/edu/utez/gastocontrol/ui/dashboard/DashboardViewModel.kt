@@ -138,7 +138,10 @@ class DashboardViewModel(
 
         cargaJob = viewModelScope.launch {
             _uiState.value = try {
-                val movimientos = repository.getMovements(from = periodo.desde, to = periodo.hasta)
+                // getMovements devuelve Result: getOrThrow() entrega la lista o lanza la ApiException
+                val movimientos = repository
+                    .getMovements(from = periodo.desde, to = periodo.hasta)
+                    .getOrThrow()
                 if (movimientos.isEmpty()) {
                     DashboardUiState.Empty(periodo)
                 } else {
