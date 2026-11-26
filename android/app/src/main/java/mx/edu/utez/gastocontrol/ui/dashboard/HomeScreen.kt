@@ -38,38 +38,22 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-// Si este import marca error en tu versión, usa: androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import java.math.BigDecimal
 import mx.edu.utez.gastocontrol.data.model.MovementDto
 import mx.edu.utez.gastocontrol.sensor.ShakeDetector
 import mx.edu.utez.gastocontrol.ui.expense.MovementRow
 
-/*
- * GUÍA VISUAL v1.0 aplicada:
- * - Colores SOLO desde MaterialTheme.colorScheme (sin HEX en la Screen).
- * - Textos SOLO desde MaterialTheme.typography.
- * - Margen horizontal 20 dp · separación entre bloques 16 dp · tarjetas radio 16 dp, padding 16 dp.
- * - Ingresos en verde (tertiary*) y Gastos en rojo (error*): Isaac debe mapear esos
- *   colores oficiales en Theme.kt (ver mensaje para Isaac).
- * - Los componentes privados marcados «TEMPORAL» se sustituyen por los de
- *   ui/components (GCSummaryCard, GCLoading, GCEmptyState, GCPrimaryButton)
- *   en cuanto Isaac los publique. No son duplicados permanentes.
- * - El botón «Nuevo movimiento» es el respaldo del acelerómetro (prueba T13).
- */
-
 private val MargenPantalla = 20.dp
 private val SeparacionBloques = 16.dp
 private val FormaTarjeta = RoundedCornerShape(16.dp)
 
 /**
- * B1 · Inicio / Dashboard (guía visual, pág. 4):
- * periodo · tarjeta grande Saldo · Ingresos (verde) y Gastos (rojo) ·
+ * Inicio / Dashboard: periodo · Saldo · Ingresos y Gastos ·
  * Gastos por categoría con barras · Movimientos recientes.
- *
  * @param onNewExpense     lo dispara el acelerómetro: abrir «Nuevo gasto»
  * @param onOpenHistory    «Ver historial» en la sección de recientes
- * @param onMovementClick  tocar un movimiento reciente abre su detalle (Guillermo)
+ * @param onMovementClick  tocar un movimiento reciente abre su detalle
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,18 +62,21 @@ fun HomeScreen(
     onNewExpense: () -> Unit,
     onOpenHistory: () -> Unit,
     onMovementClick: (Long) -> Unit,
-    // Botón normal (respaldo si no hay acelerómetro, prueba T13).
+    // Botón normal
     // Si nadie lo pasa, usa la misma acción que el sensor.
-    onNewMovement: () -> Unit = onNewExpense
+    onNewMovement: () -> Unit = onNewExpense,
+    // Se llama si el servidor responde 401 (sesión no válida) → volver al login.
+    // Tiene valor por defecto para no romper la navegación actual.
+    onUnauthorized: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // B7 · Recarga cada vez que la pantalla aparece (también al volver de crear/editar/borrar)
+    // Recarga cada vez que la pantalla aparece (también al volver de crear/editar/borrar)
     LaunchedEffect(Unit) {
         viewModel.cargarResumen()
     }
 
-    // ---------- B4 / B6 · Acelerómetro ligado al ciclo de vida ----------
+    // ---------- Acelerómetro ligado al ciclo de vida ----------
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val currentOnNewExpense by rememberUpdatedState(onNewExpense)
@@ -107,9 +94,25 @@ fun HomeScreen(
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
+
+        // Si la pantalla aparece cuando la Activity YA está en RESUMED
+        // (por ejemplo, al regresar del formulario), se inicia de inmediato.
+        // start() ignora la llamada si ya estaba escuchando.
+        if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+            shakeDetector.start()
+        }
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
             shakeDetector.stop()
+        }
+    }
+
+    // ---------- Sesión no válida (401) → volver al login ----------
+    val currentOnUnauthorized by rememberUpdatedState(onUnauthorized)
+    LaunchedEffect(uiState) {
+        val estado = uiState
+        if (estado is DashboardUiState.Error && estado.sesionInvalida) {
+            currentOnUnauthorized()
         }
     }
 
@@ -129,7 +132,7 @@ fun HomeScreen(
 
             is DashboardUiState.Empty -> ContenidoDashboard(
                 periodo = estado.periodo,
-                totales = Totales(),                 // $0.00 (T10)
+                totales = Totales(),
                 gastosPorCategoria = emptyList(),
                 recientes = emptyList(),
                 mostrarTipSensor = shakeDetector.isAvailable,
@@ -166,7 +169,6 @@ private fun ContenidoDashboard(
     onNewMovement: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // LazyColumn para que todo el Inicio haga scroll en pantallas pequeñas
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = MargenPantalla, vertical = SeparacionBloques),
@@ -204,7 +206,7 @@ private fun ContenidoDashboard(
             }
         }
 
-        // Acción principal (TEMPORAL → GCPrimaryButton cuando esté en develop)
+        // Acción principal (TEMPORAL → GCPrimaryButton)
         item {
             Button(onClick = onNewMovement, modifier = Modifier.fillMaxWidth()) {
                 Text("Nuevo movimiento")
@@ -227,7 +229,7 @@ private fun ContenidoDashboard(
             }
         }
 
-        // 5. Movimientos recientes (fila reutilizable de Guillermo)
+        // 5. Movimientos recientes
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -266,9 +268,6 @@ private fun ContenidoDashboard(
     }
 }
 
-/* =====================================================================
- *  TEMPORAL → reemplazar por GCSummaryCard (ui/components de Isaac)
- * ===================================================================== */
 
 @Composable
 private fun TarjetaSaldo(saldo: BigDecimal) {
@@ -287,7 +286,6 @@ private fun TarjetaSaldo(saldo: BigDecimal) {
                 formatoDinero(saldo),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                // Saldo negativo en rojo; positivo o cero con el texto principal
                 color = if (saldo.signum() < 0) MaterialTheme.colorScheme.error
                 else MaterialTheme.colorScheme.onSurface
             )
@@ -352,9 +350,7 @@ private fun TarjetaGastosPorCategoria(categorias: List<GastoCategoria>) {
     }
 }
 
-/* =====================================================================
- *  TEMPORAL → reemplazar por GCLoading / GCEmptyState (ui/components de Isaac)
- * ===================================================================== */
+
 
 @Composable
 internal fun CargandoTemporal(modifier: Modifier = Modifier) {
@@ -363,7 +359,7 @@ internal fun CargandoTemporal(modifier: Modifier = Modifier) {
     }
 }
 
-/** Mensaje entendible + Reintentar (guía: estado Error). Lo usan Inicio e Historial. */
+/** Mensaje entendible + Reintentar (estado Error). Lo usan Inicio e Historial. */
 @Composable
 internal fun ErrorConReintento(
     mensaje: String,

@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import mx.edu.utez.gastocontrol.data.model.MovementDto
 import mx.edu.utez.gastocontrol.data.repository.MovementRepository
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 // Filtros del historial
 data class FiltrosHistorial(
@@ -37,28 +40,40 @@ sealed interface HistoryUiState {
     ) : HistoryUiState
 
     data class Error(
-        val mensaje: String
+        val mensaje: String,
+        // true cuando el servidor respondió 401: la pantalla debe volver al login
+        val sesionInvalida: Boolean = false
     ) : HistoryUiState
 }
 
-private val FORMATO_FECHA = Regex("""\d{4}-\d{2}-\d{2}""")
+/*
+ * Convierte "AAAA-MM-DD" en una fecha REAL.
+ * ISO_LOCAL_DATE es estricto: rechaza 2026-99-99, 2026-02-30 o 2026-1-5.
+ * Devuelve null si el texto no es una fecha válida.
+ * (minSdk 33, así que java.time está disponible sin configuración extra)
+ */
+private fun parsearFecha(texto: String): LocalDate? =
+    try {
+        LocalDate.parse(texto, DateTimeFormatter.ISO_LOCAL_DATE)
+    } catch (e: DateTimeParseException) {
+        null
+    }
 
-// Validacion de fechas
+// Validacion de fechas: formato, fecha existente y rango correcto
 fun validarFechas(desde: String, hasta: String): String? {
 
-    if (desde.isNotEmpty() && !FORMATO_FECHA.matches(desde)) {
-        return "La fecha Desde debe tener formato AAAA-MM-DD."
+    val fechaDesde = if (desde.isNotEmpty()) parsearFecha(desde) else null
+    val fechaHasta = if (hasta.isNotEmpty()) parsearFecha(hasta) else null
+
+    if (desde.isNotEmpty() && fechaDesde == null) {
+        return "La fecha Desde no es válida. Usa AAAA-MM-DD (ej. 2026-11-01)."
     }
 
-    if (hasta.isNotEmpty() && !FORMATO_FECHA.matches(hasta)) {
-        return "La fecha Hasta debe tener formato AAAA-MM-DD."
+    if (hasta.isNotEmpty() && fechaHasta == null) {
+        return "La fecha Hasta no es válida. Usa AAAA-MM-DD (ej. 2026-11-30)."
     }
 
-    if (
-        desde.isNotEmpty() &&
-        hasta.isNotEmpty() &&
-        desde > hasta
-    ) {
+    if (fechaDesde != null && fechaHasta != null && fechaDesde.isAfter(fechaHasta)) {
         return "Desde no puede ser posterior a Hasta."
     }
 
@@ -166,7 +181,10 @@ class HistoryViewModel(
 
             } catch (e: Exception) {
 
-                HistoryUiState.Error(mensajeDeError(e))
+                HistoryUiState.Error(
+                    mensaje = mensajeDeError(e),
+                    sesionInvalida = esSesionInvalida(e)
+                )
             }
         }
     }

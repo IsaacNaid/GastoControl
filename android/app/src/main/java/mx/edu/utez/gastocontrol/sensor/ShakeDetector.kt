@@ -18,7 +18,7 @@ class ShakeDetector(
 ): SensorEventListener {
     //el servicio del sistema es el que da acceso a todos los sensores
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE)
-    as SensorManager
+            as SensorManager
 
     //sera nullo si el equipo no tuviera el acelerometro
     private val accelerometer: Sensor? =
@@ -26,19 +26,25 @@ class ShakeDetector(
 
     private var lastShakeTime = 0L
 
+    // Evita registrar el listener dos veces (start() puede llamarse más de una vez)
+    private var escuchando = false
+
     val isAvailable: Boolean
         get() = accelerometer != null
 
     //empieza a escuchar aqui el sensor, si no existiera, simplemente no hace nada
     fun start() {
+        if (escuchando) return
         accelerometer?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
+            escuchando = sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
         }
     }
 
     //deja de escuchar el sistema, libera el sensor para no gastar bateria
     fun stop() {
+        if (!escuchando) return
         sensorManager.unregisterListener(this)
+        escuchando = false
     }
 
     override fun onSensorChanged(event: SensorEvent) {
