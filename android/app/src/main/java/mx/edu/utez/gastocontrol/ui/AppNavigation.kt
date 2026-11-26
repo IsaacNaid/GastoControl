@@ -136,6 +136,7 @@ fun AppNavigation(
                 ) {
                     HomeScreen(
                         viewModel = dashboardViewModel,
+                        onUnauthorized = onLogout,
 
                         onNewExpense = {
                             previousScreen = "home"
@@ -161,6 +162,7 @@ fun AppNavigation(
 
             HistoryScreen(
                 viewModel = historyViewModel,
+                onUnauthorized = onLogout,
 
                 onMovementClick = { id ->
                     previousScreen = "history"

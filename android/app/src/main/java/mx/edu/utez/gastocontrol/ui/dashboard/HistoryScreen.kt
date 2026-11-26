@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,7 +39,9 @@ import mx.edu.utez.gastocontrol.ui.expense.MovementRow
 fun HistoryScreen(
     viewModel: HistoryViewModel,
     onMovementClick: (Long) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    // Se llama si el servidor responde 401 → volver al login (valor por defecto: no hace nada)
+    onUnauthorized: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val filtros by viewModel.filtros.collectAsState()
@@ -47,6 +50,15 @@ fun HistoryScreen(
     //Recarga al aparecer y al volver del detalle/edición/borrado
     LaunchedEffect(Unit) {
         viewModel.cargarHistorial()
+    }
+
+    // Sesión no válida (401) → volver al login
+    val currentOnUnauthorized by rememberUpdatedState(onUnauthorized)
+    LaunchedEffect(uiState) {
+        val estado = uiState
+        if (estado is HistoryUiState.Error && estado.sesionInvalida) {
+            currentOnUnauthorized()
+        }
     }
 
     Scaffold(
@@ -67,7 +79,6 @@ fun HistoryScreen(
         ) {
             //Filtro por tipo
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-
                 FilterChip(
                     selected = filtros.tipo == null,
                     onClick = { viewModel.cambiarTipo(null) },
@@ -137,7 +148,8 @@ fun HistoryScreen(
                 is HistoryUiState.Success -> {
                     EtiquetaPeriodo(estado.filtros)
                     ResumenPeriodo(estado.totales)
-                    LazyColumn(modifier = Modifier.weight(1f),
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(estado.movimientos, key = { it.id }) { movimiento ->
@@ -156,7 +168,7 @@ fun HistoryScreen(
 private fun hayFiltros(f: FiltrosHistorial): Boolean =
     f.tipo != null || f.desde.isNotEmpty() || f.hasta.isNotEmpty()
 
-/** Indica en pantalla a qué tipo corresponden los totales*/
+/** Indica en pantalla a qué tipo y periodo corresponden los totales */
 @Composable
 private fun EtiquetaPeriodo(f: FiltrosHistorial) {
     val tipo = when (f.tipo) {

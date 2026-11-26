@@ -120,20 +120,27 @@ fun formatoDinero(valor: BigDecimal): String {
 }
 
 // Manejo de errores compatible con MovementRepository
-internal fun mensajeDeError(e: Exception): String = when (e) {
+internal fun mensajeDeError(e: Exception): String = when {
 
-    is ApiException ->
+    esSesionInvalida(e) ->
+        "Tu sesión no es válida. Inicia sesión de nuevo."
+
+    e is ApiException ->
         e.message ?: "Ocurrió un error en la solicitud."
 
-    is IOException ->
+    e is IOException ->
         "No se pudo conectar con el servidor. Revisa tu conexión."
 
-    is NumberFormatException ->
+    e is NumberFormatException ->
         "El servidor envió un monto con formato inválido."
 
     else ->
         "Ocurrió un error inesperado. Intenta de nuevo."
 }
+
+// true si el repositorio respondió 401 (credenciales ausentes o incorrectas)
+internal fun esSesionInvalida(e: Exception): Boolean =
+    e is ApiException && e.code == 401
 
 data class Periodo(
     val desde: String,
@@ -199,7 +206,9 @@ sealed interface DashboardUiState {
     ) : DashboardUiState
 
     data class Error(
-        val mensaje: String
+        val mensaje: String,
+        // true cuando el servidor respondió 401: la pantalla debe volver al login
+        val sesionInvalida: Boolean = false
     ) : DashboardUiState
 }
 
@@ -256,7 +265,10 @@ class DashboardViewModel(
 
             } catch (e: Exception) {
 
-                DashboardUiState.Error(mensajeDeError(e))
+                DashboardUiState.Error(
+                    mensaje = mensajeDeError(e),
+                    sesionInvalida = esSesionInvalida(e)
+                )
             }
         }
     }
