@@ -1,7 +1,8 @@
-package mx.edu.utez.gastocontrol.data.repository
+﻿package mx.edu.utez.gastocontrol.data.repository
 
 import mx.edu.utez.gastocontrol.data.model.RegisterRequest
 import mx.edu.utez.gastocontrol.data.remote.AuthApi
+import mx.edu.utez.gastocontrol.util.SessionManager
 import okhttp3.Credentials
 import retrofit2.Response
 
@@ -29,11 +30,23 @@ class AuthRepository(
         password: String
     ): Response<Unit> {
 
+        SessionManager.clearSession()
+
         val credentials = Credentials.basic(
             email.trim(),
             password
         )
 
-        return authApi.login(credentials)
+        val response = authApi.login(credentials)
+
+        if (response.isSuccessful) {
+            SessionManager.saveSession(credentials)
+        }
+
+        return response
+    }
+
+    fun logout() {
+        SessionManager.clearSession()
     }
 }

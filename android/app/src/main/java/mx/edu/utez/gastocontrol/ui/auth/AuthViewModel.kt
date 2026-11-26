@@ -257,6 +257,16 @@ class AuthViewModel(
         }
     }
 
+    fun logout() {
+        repository.logout()
+        _uiState.value = AuthUiState()
+    }
+
+    fun onBiometricError(message: String) {
+        logout()
+        showError(message)
+    }
+
     fun resetForm() {
         if (!_uiState.value.isLoading) {
             _uiState.value = AuthUiState()

@@ -77,7 +77,7 @@ class MainActivity : FragmentActivity() {
 
                                             onError = { message ->
 
-                                                authViewModel.resetForm()
+                                                authViewModel.onBiometricError(message)
 
                                                 Toast.makeText(
                                                     this@MainActivity,
@@ -118,7 +118,7 @@ class MainActivity : FragmentActivity() {
 
                                 Button(
                                     onClick = {
-                                        authViewModel.resetForm()
+                                        authViewModel.logout()
                                         isAuthenticated = false
                                     }
                                 ) {
