@@ -1,5 +1,6 @@
 package mx.edu.utez.gastocontrol.data.remote
 
+import mx.edu.utez.gastocontrol.BuildConfig
 import mx.edu.utez.gastocontrol.util.SessionManager
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -7,8 +8,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object AuthRetrofitClient {
 
-    private const val BASE_URL =
-        "http://10.0.2.2:8080/"
+    private val BASE_URL = BuildConfig.API_BASE_URL
 
     private val client = OkHttpClient.Builder()
         .addInterceptor { chain ->

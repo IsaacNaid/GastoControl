@@ -14,6 +14,16 @@ android {
 
     defaultConfig {
         applicationId = "mx.edu.utez.gastocontrol"
+
+        val apiBaseUrl = providers.gradleProperty("API_BASE_URL")
+            .orElse("http://10.0.2.2:8080/")
+            .get()
+
+        buildConfigField(
+            "String",
+            "API_BASE_URL",
+            "\"${apiBaseUrl}\""
+        )
         minSdk = 33
         targetSdk = 37
         versionCode = 1
@@ -37,6 +47,7 @@ android {
     }
 
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 }
